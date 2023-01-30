@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -90,7 +91,7 @@ func TestGetVolumeAtAskLimit(t *testing.T) {
 	}
 }
 
-func TestMatching(t *testing.T) {
+func TestMatchingEqualVolume(t *testing.T) {
 	b := NewOrderbook()
 	o := NewMockBuyOrder()
 	oo := &o
@@ -98,16 +99,72 @@ func TestMatching(t *testing.T) {
 	// fmt.Println("FIRST EXECUTION :  ", exc)
 	// fmt.Println("Best Bid :  ", b.GetBestBid())
 	// fmt.Println("Best Bid Volume :  ", b.GetVolumeAtBidLimit(o.Order.Price))
-
-	price := float32(10)
-	quantity := float32(100)
-	accountId := uint32(200)
-	sequenceId := uint32(2)
+	quantity := float32(o.Order.Quantity)
+	price := float32(o.Order.Price)
+	accountId := uint32(o.Order.AccountId)
+	sequenceId := uint32(o.SequenceId + 1)
 	BidOrAsk := false // true = bid
 	orderType := LIMIT
 	sellOrder := NewCustomOrder(price, quantity, BidOrAsk, orderType, accountId, sequenceId)
 	s := &sellOrder
 	b.Execute(s)
+
+	if b.BLength() != 0 || b.ALength() != 0 {
+		fmt.Println(b.BLength(), b.ALength())
+		t.Errorf("orderbook should be empty")
+	}
+	// fmt.Println("SECOND EXECUTION : ", excc)
+
+}
+
+func TestMatchingHalfVolume(t *testing.T) {
+	b := NewOrderbook()
+	o := NewMockBuyOrder()
+	oo := &o
+	b.Execute(oo)
+	// fmt.Println("FIRST EXECUTION :  ", exc)
+	// fmt.Println("Best Bid :  ", b.GetBestBid())
+	// fmt.Println("Best Bid Volume :  ", b.GetVolumeAtBidLimit(o.Order.Price))
+	quantity := float32(o.Order.Quantity) / 2
+	price := float32(o.Order.Price)
+	accountId := uint32(o.Order.AccountId)
+	sequenceId := uint32(o.SequenceId + 1)
+	BidOrAsk := false // true = bid
+	orderType := LIMIT
+	sellOrder := NewCustomOrder(price, quantity, BidOrAsk, orderType, accountId, sequenceId)
+	s := &sellOrder
+	b.Execute(s)
+
+	if b.GetVolumeAtBidLimit(o.Order.Price) != (o.Order.Quantity / 2) {
+		fmt.Println(b.GetVolumeAtBidLimit(o.Order.Price))
+		t.Errorf("best offer volume should be order quantity")
+	}
+	// fmt.Println("SECOND EXECUTION : ", excc)
+
+}
+
+func TestMatchingDoubleVolume(t *testing.T) {
+	b := NewOrderbook()
+	o := NewMockBuyOrder()
+	oo := &o
+	b.Execute(oo)
+	// fmt.Println("FIRST EXECUTION :  ", exc)
+	// fmt.Println("Best Bid :  ", b.GetBestBid())
+	// fmt.Println("Best Bid Volume :  ", b.GetVolumeAtBidLimit(o.Order.Price))
+	quantity := float32(o.Order.Quantity) * 2
+	price := float32(o.Order.Price)
+	accountId := uint32(o.Order.AccountId)
+	sequenceId := uint32(o.SequenceId + 1)
+	BidOrAsk := false // true = bid
+	orderType := LIMIT
+	sellOrder := NewCustomOrder(price, quantity, BidOrAsk, orderType, accountId, sequenceId)
+	s := &sellOrder
+	b.Execute(s)
+
+	if b.GetVolumeAtAskLimit(o.Order.Price) != o.Order.Quantity-o.ExecutedQuantity {
+		fmt.Println(b.GetVolumeAtAskLimit(o.Order.Price))
+		t.Errorf("best offer volume should be order quantity")
+	}
 	// fmt.Println("SECOND EXECUTION : ", excc)
 
 }

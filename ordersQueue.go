@@ -41,7 +41,7 @@ func (this *OrdersQueue) IsEmpty() bool {
 }
 
 func (this *OrdersQueue) PlaceOrder(o *Order) {
-	q := o.Order.Quantity
+	q := o.Order.Quantity - o.ExecutedQuantity
 	this.totalVolume += float32(q)
 	// if the oldest order is not matched and the ringbuffer filled up, the ringbuffer would resize.
 	this.ringbuffer.PushBack(*o)
@@ -68,6 +68,7 @@ func (this *OrdersQueue) Execute(quantity float32) float32 {
 			this.ringbuffer.PopFront()
 			// partial filled
 			this.totalVolume -= q
+			order.ExecutedQuantity += q
 		} else {
 			// write the updated quantity back to the buf
 			// a better way can be a cache quantity of top order in the orderqueue level

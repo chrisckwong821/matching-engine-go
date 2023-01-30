@@ -87,13 +87,16 @@ func (this *Orderbook) ExecuteBid(o *Order) float32 {
 
 // entry point for ask
 func (this *Orderbook) ExecuteAsk(o *Order) float32 {
+	leftQuantity := o.Order.Quantity - o.ExecutedQuantity
+	if leftQuantity == 0 {
+		return o.ExecutedQuantity
+	}
 	// no best bid
 	if this.BLength() == 0 {
 		this.Add(o.Order.Price, o)
 		return o.ExecutedQuantity
 	}
 	best_bid := this.GetBestBid()
-	leftQuantity := o.Order.Quantity - o.ExecutedQuantity
 	// order fully filled, exit
 	if leftQuantity == 0 {
 		return o.ExecutedQuantity
